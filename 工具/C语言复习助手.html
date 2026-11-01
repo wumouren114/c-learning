@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C语言复习助手</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171a23; --panel2:#1e2230; --line:#2b3142;
+    --txt:#e6e9f2; --dim:#9aa3b8; --acc:#5b9dff; --acc2:#3ddc97; --warn:#ffb454;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--txt);
+    font-family:"Microsoft YaHei","PingFang SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+    line-height:1.65;
+  }
+  header{
+    position:sticky; top:0; z-index:10; background:rgba(15,17,23,.94);
+    backdrop-filter:blur(8px); border-bottom:1px solid var(--line); padding:16px 20px;
+  }
+  .title{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:12px}
+  h1{font-size:20px; margin:0; letter-spacing:.5px}
+  .sub{color:var(--dim); font-size:13px}
+  .bar{display:flex; gap:10px; flex-wrap:wrap}
+  input[type=search],select{
+    background:var(--panel2); color:var(--txt); border:1px solid var(--line);
+    border-radius:9px; padding:9px 12px; font-size:14px; font-family:inherit; outline:none;
+  }
+  input[type=search]{flex:1 1 280px; min-width:200px}
+  input[type=search]:focus,select:focus{border-color:var(--acc)}
+  main{max-width:960px; margin:0 auto; padding:20px}
+  .count{color:var(--dim); font-size:13px; margin:4px 0 14px}
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    margin-bottom:12px; overflow:hidden; transition:border-color .15s;
+  }
+  .card:hover{border-color:#3a4257}
+  .head{padding:14px 16px; cursor:pointer; display:flex; gap:10px; align-items:flex-start}
+  .badge{
+    flex:0 0 auto; font-size:12px; padding:2px 9px; border-radius:20px;
+    background:rgba(91,157,255,.15); color:var(--acc); border:1px solid rgba(91,157,255,.35);
+    white-space:nowrap; margin-top:3px;
+  }
+  .h-main{flex:1}
+  .h-title{font-weight:600; font-size:15.5px}
+  .h-concepts{color:var(--dim); font-size:13px; margin-top:3px}
+  .arrow{color:var(--dim); font-size:13px; margin-top:3px; transition:transform .2s}
+  .card.open .arrow{transform:rotate(90deg)}
+  .body{display:none; padding:0 16px 16px; border-top:1px solid var(--line)}
+  .card.open .body{display:block}
+  .sec{margin-top:14px}
+  .sec h3{
+    font-size:13px; margin:0 0 6px; color:var(--acc2); font-weight:600;
+    letter-spacing:.4px; text-transform:none;
+  }
+  .sec.warn h3{color:var(--warn)}
+  ul{margin:0; padding-left:20px}
+  li{margin:3px 0}
+  code,pre{font-family:"Cascadia Code",Consolas,"Courier New",monospace}
+  code{background:var(--panel2); padding:1px 6px; border-radius:5px; font-size:13px}
+  pre{
+    background:#0b0e14; border:1px solid var(--line); border-radius:9px;
+    padding:12px; overflow:auto; font-size:13px; margin:8px 0 0;
+  }
+  .tags{display:flex; gap:6px; flex-wrap:wrap; margin-top:14px}
+  .tag{font-size:12px; color:var(--dim); border:1px solid var(--line); border-radius:20px; padding:1px 9px}
+  .sec pre{white-space:pre-wrap; word-break:break-word}
+  #list .sec ul li[data-pre]{white-space:pre-wrap; font-family:"Cascadia Code",Consolas,"Courier New",monospace; font-size:12.5px}
+  mark{background:rgba(255,180,84,.35); color:#fff; border-radius:3px; padding:0 2px}
+  .empty{color:var(--dim); text-align:center; padding:40px 0}
+  footer{color:var(--dim); font-size:12px; text-align:center; padding:24px 0 40px}
+</style>
+</head>
+<body>
+<header>
+  <div class="title">
+    <h1>C语言复习助手</h1>
+    <span class="sub">何钦铭《C语言程序设计（第4版）》· 本地离线 · 可搜索</span>
+  </div>
+  <div class="bar">
+    <input type="search" id="q" placeholder="搜索：知识点 / 语法 / 关键词 / 易错点 / 自测题（Ctrl+K 聚焦）">
+    <select id="ch"><option value="">全部章节</option></select>
+    <select id="tg"><option value="">全部标签</option></select>
+  </div>
+</header>
+
+<main>
+  <div class="count" id="count"></div>
+  <div id="list"></div>
+</main>
+
+<footer>本页由私教课逐节增量生成 · 每章末汇总一次 · 内容可离线打开</footer>
+
+<script>
+/* ============================================================
+   数据区：每讲完一节，往数组里追加一个对象即可
+   字段：chapter, section, title, concepts[], syntax[], examples[],
+        pitfalls[], keywords[], selfTest[], tags[]
+   ============================================================ */
+const NOTES = [
+  {
+    "chapter": "第2章",
+    "section": "2.1",
+    "title": "程序的基本结构 & 在屏幕上输出信息",
+    "concepts": [
+      "C程序由函数构成，有且只有一个 main 函数，程序从 main 开始执行",
+      "main 的标准写法：int main(void) { ... return 0; }",
+      "printf 是标准库函数，用来把内容输出到屏幕",
+      "printf 的第一个参数叫格式控制串，用双引号括起来",
+      "\\n 是转义字符，表示换行；它写在字符串里，不显示出来",
+      "#include <stdio.h> 是编译预处理命令，把标准输入输出头文件包含进来",
+      "语句以分号 ; 结尾；复合语句用一对花括号 {} 括起来",
+      "双引号里面是纯文本，原样输出：中文标点、空格、多少个等号都随你；全角/半角的要求只针对代码符号"
+    ],
+    "syntax": [
+      "#include <stdio.h>",
+      "int main(void) { ... }",
+      "printf(\"要输出的内容\\n\");",
+      "return 0;",
+      "单行注释 // 注释内容",
+      "多行注释 /* 注释内容 */"
+    ],
+    "examples": [
+      "最小程序：int main(void){ printf(\"Hello\\n\"); return 0; } —— 输出 Hello 并换行",
+      "#include <stdio.h> 必须在调用 printf 之前，否则编译器会抱怨隐式声明",
+      "printf(\"a\\nb\\n\"); 一次性输出两行：a、b",
+      "printf(\"第一行\\n\"); printf(\"第二行\\n\"); —— 两个 printf 依次输出，各自换行，结果是两行",
+      "printf(\"第一行\"); printf(\"第二行\\n\"); —— 第一个没写 \\n，第二个会紧贴在它后面：第一行第二行",
+      "printf(\"你好\\n我是吴政闻\\n开始学c语言\"); —— 一个 printf 里连排 \\n，就能输出三行",
+      "把上一句的第一个 \\n 删掉变成 printf(\"你好我是吴政闻\\n开始学c语言\"); 输出立刻变成：前两句粘在同一行（实战验证）",
+      "printf(\"===== 我的第一份作业 =====\\n\"); —— 字符串里的等号、全角冒号都只是普通文本，不受半角规则约束"
+    ],
+    "pitfalls": [
+      "main 写成 mian / Main —— C 区分大小写，拼错直接报未定义",
+      "语句末尾漏分号 —— 报错常常指向下一行，别被误导",
+      "把 \\n 写成 /n：方向反了，结果是原样输出 /n 而不是换行",
+      "把 \\n 写到了双引号外面，比如 printf(\\n); —— 编译器会把它当成一个叫 n 的变量，报未声明。反斜杠必须待在引号里面",
+      "以为 \\n 会显示出来 —— 它是控制字符，屏幕上只表现为「光标跳到下一行」，什么都看不见",
+      "在中文输入法下打出全角 ；\" （ ） —— 编译器认不出，报 stray 之类错误",
+      "漏了 #include <stdio.h> —— printf 未声明，4.9 的 gcc 会给警告而不是错误，更隐蔽",
+      "把 printf 写在 main 外面，或大括号不配对",
+      "以为「写完一句话」就会自动换行 —— 换行不会自动发生，是 \\n 求来的；少写一个，前后内容就粘成一行",
+      "把「不能用全角」记过头 —— 只对代码符号（; ( ) \" ）有要求；双引号里面是纯文本，用全角冒号、多打几个等号都不影响编译"
+    ],
+    "keywords": ["main", "printf", "stdio.h", "转义字符", "换行", "分号", "注释", "程序结构"],
+    "selfTest": [
+      "程序一定从哪个函数开始执行？",
+      "\\n 和 /n 有什么区别？",
+      "#include <stdio.h> 的作用是什么？",
+      "为什么 main 后面要写 return 0;？"
+    ],
+    "tags": ["C语言", "第2章", "2.1", "基础"]
+  },
+  {
+    "chapter": "第2章",
+    "section": "环境",
+    "title": "VS Code + MinGW 环境踩坑记录（实操必看）",
+    "concepts": [
+      "编译命令：gcc -std=c99 -Wall -finput-charset=UTF-8 -fexec-charset=UTF-8 -g 源文件.c -o 目标.exe",
+      "VS Code 里按 F5 = 先用「C/C++: gcc 生成活动文件」任务编译，再用 gdb 调试运行",
+      "按 Ctrl+Shift+P → 运行任务 →「编译并运行当前文件」= 不调试直接跑，结果留在终端里",
+      "-g 表示生成调试信息；-std=c99 表示按 C99 标准编译；-Wall 打开全部警告",
+      "本机工具链：Dev-C++ 自带的 TDM-GCC 4.9.2 + GDB 7.8.1，位于 D:\\Dev-Cpp\\MinGW64\\bin"
+    ],
+    "syntax": [
+      "F5 —— 编译并调试运行当前文件",
+      "Ctrl+Shift+B —— 编译并运行当前文件（默认生成任务，最常用）",
+      "Ctrl+Shift+P → 运行任务 —— 挑一个任务执行"
+    ],
+    "examples": [
+      "调试输出里出现 Breakpoint 1, main () at xxx.c:4，说明程序正常跑到了第 4 行",
+      "The program ... has exited with code 0 —— 退出码 0 表示程序正常结束"
+    ],
+    "pitfalls": [
+      "文件名用中文（如 ch2_1_骨架.c）—— 本机 GDB 7.8.1 在调试模式下认不出中文路径，会报 Program path ... is missing or invalid / No such file or directory，哪怕 exe 明明存在。练习文件一律用英文名！",
+      "把文件建成了文件夹 —— VS Code 里要「右键 → 新建文件」，不是「新建文件夹」",
+      "文件没有 .c 后缀 —— gcc 靠后缀判断语言，没后缀会报 file not recognized，不会当成 C 源码",
+      "源码文件放进了 .vscode 目录 —— 那里是放配置的，源码放进去会出现各种怪现象",
+      "输出中文显示成乱码 —— 是编码问题：编译用 -fexec-charset=UTF-8，和控制台/调试台保持一致即可",
+      "程序窗口一闪而过 —— 那是 externalConsole 弹出独立窗口；改 false 后输出留在 VS Code 里"
+    ],
+    "keywords": ["英文文件名", "gcc", "gdb", "F5", "运行任务", "乱码", "编码", "UTF-8", "externalConsole", ".vscode"],
+    "selfTest": [
+      "为什么练习文件不能用中文名？",
+      "F5 和「运行任务 → 编译并运行当前文件」有什么区别？",
+      "编译时 -std=c99 和 -Wall 分别起什么作用？",
+      "退出码 0 代表什么？"
+    ],
+    "tags": ["C语言", "第2章", "环境", "工具链"]
+  },
+  {
+    "chapter": "第2章",
+    "section": "2.2",
+    "title": "变量声明 & printf 占位符",
+    "concepts": [
+      "C 的变量声明和 Java 几乎一样：类型 名字 = 初值;",
+      "printf 是「模板 + 填洞」思维：先在字符串里留占位符，再把值按顺序填进去（Java 是字符串拼接）",
+      "常用占位符：%d 整数、%f 小数、%c 单个字符、%s 字符串",
+      "%f 默认输出 6 位小数；%.2f 表示保留 2 位小数",
+      "C 没有 String 类型，字符串用 char 数组；C 没有 boolean，用 0 / 非 0",
+      "C 的 char 是 1 字节的整数（Java 的 char 是 2 字节 Unicode）",
+      "占位符和实参类型不匹配时 C 不报错，只输出垃圾值；-Wall 会给出 -Wformat 警告"
+    ],
+    "syntax": [
+      "int age = 18;",
+      "double height = 175.5;",
+      "char grade = 'A';",
+      "char name[] = \"吴政闻\";",
+      "printf(\"年龄：%d\\n\", age);",
+      "printf(\"身高：%.1f cm\\n\", height);",
+      "printf(\"%d + %d = %d\\n\", a, b, a + b);"
+    ],
+    "examples": [
+      "四种占位符实测：printf(\"%s\",name) → 吴政闻；%d → 18；%.1f → 175.5；%c → A",
+      "printf(\"%d\\n\", 3.14); 实测输出 1374389535 —— 类型不匹配得到的是垃圾值，编译照样通过",
+      "printf(\"%f\\n\", 18); 实测输出 0.000000",
+      "printf(\"%f\\n\", 1.5); 输出 1.500000（默认 6 位小数），想要 1.5 得写 %.1f",
+      "-Wall 的 -Wformat 会提醒：format '%d' expects argument of type 'int', but argument 2 has type 'double'",
+      "long 用 %ld、long long 用 %lld，写 %d 会截断"
+    ],
+    "pitfalls": [
+      "%d 配小数、%f 配整数 —— 编译能过，输出是垃圾值；只有 -Wall 才会提示",
+      "%f 默认 6 位小数，忘写 .2 会打出 1.500000",
+      "占位符的个数和顺序必须与后面的值一一对应，少给一个就打印内存垃圾",
+      "char 只能装单个字符，要用单引号 'A'；\"A\"（双引号）是字符串，不是 char",
+      "字符串必须用 %s，用 %c 只会输出第一个字符",
+      "把 Java 的字符串拼接习惯带过来写 printf(\"a=\" + a); —— C 里这是错的，要写成 printf(\"a=%d\", a);"
+    ],
+    "keywords": ["printf", "占位符", "格式化输出", "%d", "%f", "%c", "%s", "%.2f", "变量声明", "char数组"],
+    "selfTest": [
+      "%f 和 %.2f 有什么区别？",
+      "printf(\"%d\\n\", 3.14); 会输出什么？为什么还能编译通过？",
+      "C 里怎么存一个字符串？和 Java 的 String 差在哪？",
+      "Java 的 System.out.println(\"a=\" + a) 在 C 里要怎么写？"
+    ],
+    "tags": ["C语言", "第2章", "2.2", "基础", "printf"]
+  },
+  {
+    "chapter": "第2章",
+    "section": "2.2.2-2.2.3",
+    "title": "常量、变量、数据类型 · 算术运算和赋值运算",
+    "concepts": [
+      "常量：值不能改。C 里用 const 修饰，如 const double PI = 3.14159; 改了会编译报错（Java 的 final 完全对应）",
+      "#define PI 3.14159 是预处理宏定义，也是常量，但只是文本替换、没有类型",
+      "C 的基本数据类型：int 整数、double 双精度小数、float 单精度、char 字符、long/long long 长整数",
+      "sizeof 运算符可查类型占几个字节：printf(\"%d\", sizeof(int))",
+      "算术运算符 + - * / %，优先级与 Java 相同；% 只能用于整数",
+      "整数除法截断：7 / 2 得 3（不是 3.5）；要小数必须让至少一边是浮点：7.0 / 2 或 7 / 2.0",
+      "复合赋值：+= -= *= /= %=，a += b 等价于 a = a + b",
+      "自增自减 ++ 和 --，与 Java 完全相同"
+    ],
+    "syntax": [
+      "const double PI = 3.14159;",
+      "#define PI 3.14159    （预处理命令，行尾无分号）",
+      "int a = 7, b = 2;",
+      "printf(\"%d\\n\", a % b);",
+      "printf(\"%d\\n\", sizeof(int));",
+      "n += 5;   n -= 3;   n *= 2;   n /= 4;   n %= 4;",
+      "i++;   i--;"
+    ],
+    "examples": [
+      "7 + 2 = 9；7 - 2 = 5；7 * 2 = 14（实测）",
+      "7 / 2 = 3（整数除法砍掉小数）；7 % 2 = 1（余数）",
+      "7.0 / 2.0 = 3.5 —— 只要一边是小数，结果就是小数",
+      "n=10 依次 n+=5 → 15，n-=3 → 12，n*=2 → 24，n/=4 → 6，n%=4 → 2（实测）",
+      "printf(\"%%\") 才能打印出一个百分号，因为 % 在格式串里是特殊字符"
+    ],
+    "pitfalls": [
+      "7 / 2 得 3 而不是 3.5 —— 两个整数相除，结果还是整数（与 Java 一模一样）",
+      "想打印 % 号必须写 %% —— 单个 % 会被当成占位符的开头",
+      "% 不能用于小数：7.0 % 2 会编译报错，取余只能用于整数",
+      "把 const 当成普通变量去赋值 —— 会报 assignment of read-only variable",
+      "float 精度只有 6~7 位有效数字，要精确用 double",
+      "sizeof 返回的是字节数，是整数，用 %d 或 %zu 输出"
+    ],
+    "keywords": ["const", "#define", "常量", "int", "double", "float", "char", "算术运算", "取余", "整数除法", "复合赋值", "sizeof"],
+    "selfTest": [
+      "7 / 2 等于几？怎么才能得到 3.5？",
+      "% 和 / 分别干什么？% 能用于小数吗？",
+      "const 和 #define 定义的常量有什么区别？",
+      "a += 5 等价于什么？"
+    ],
+    "tags": ["C语言", "第2章", "2.2.2", "2.2.3", "基础", "运算"]
+  },
+  {
+    "chapter": "第2章",
+    "section": "2.3",
+    "title": "计算分段函数 · 关系运算 · if-else 语句",
+    "concepts": [
+      "关系运算符 > < >= <= == !=，结果只有两个：真记作 1，假记作 0",
+      "= 是赋值，== 才是判断相等。if (x = 0) 在 C 里不报错（Java 会拦），条件恒为假且顺手把 x 改成 0",
+      "保命写法：常量写左边，if (0 == x)，写错了 if (0 = x) 编译直接报错",
+      "C 没有 boolean 类型：0 为假、非 0 为真，所以 if (5) 合法且恒成立（Java 必须放 boolean）",
+      "if-else 二选一；if 后面不加大括号时只保护紧跟着的第一条语句",
+      "分段函数思路：先判断落在哪一段，再分别计算"
+    ],
+    "syntax": [
+      "if (条件) { 语句组1; } else { 语句组2; }",
+      "if (x >= 0) f = sqrt(x); else f = (x+1)*(x+1) + 2*x + 1.0/x;",
+      "if (0 == x) { ... }    /* 常量写左边的保命写法 */",
+      "max = a; if (b > max) max = b; if (c > max) max = c;   /* 打擂台法求最大值 */"
+    ],
+    "examples": [
+      "分段函数 f(x)：x>=0 时 f = x^0.5，x<0 时 f = (x+1)^2 + 2x + 1/x；输入 10 输出 f(10.00) = 3.16",
+      "三个数求最大值用打擂台法：先把 a 当擂主，再依次让 b、c 挑战（六种排列都只需 3 次比较）",
+      "两数由小到大：交换必须借第三个临时变量 int t = a; a = b; b = t;"
+    ],
+    "pitfalls": [
+      "if (x = 0) 是赋值不是判断 —— 条件恒假，而且 x 已经被改成 0",
+      "if 后面多写分号 if (x > 0); 等价于 if 什么都不做，后面的语句无条件执行",
+      "if 不加大括号只保护第一条语句，第二条会无条件执行",
+      "掉进 if 陷阱：printf(\"a=%d\",b=%d\\n\", a, b); 双引号提前闭合，应该是一对双引号从头包到尾",
+      "声明变量时打错字：int a, d, c; 报了 'b' undeclared 和 unused variable 'd'，警告 unused variable 十有八九是打错字"
+    ],
+    "keywords": ["if", "else", "关系运算", "==", "赋值与判断", "boolean", "分段函数", "打擂台", "交换"],
+    "selfTest": [
+      "= 和 == 有什么区别？if (x = 0) 在 C 里合法吗？它做了什么？",
+      "C 语言里 if (5) 合法吗？为什么？",
+      "求三个数的最大值，不打擂台你会怎么写？打擂台好在哪？"
+    ],
+    "tags": ["C语言", "第2章", "2.3", "分支", "if"]
+  },
+  {
+    "chapter": "第2章",
+    "section": "2.3.4",
+    "title": "格式化输入函数 scanf()",
+    "concepts": [
+      "scanf 是「按格式读取」，和 printf 正好相反：printf 往屏幕写，scanf 从键盘读",
+      "scanf 的变量前必须加 &（取地址）：printf 只需要变量的值，scanf 需要知道变量在哪",
+      "double 用 scanf 读是 %lf，用 printf 输出是 %f —— 输入输出不一样，必须记住",
+      "scanf(\"%d %d\", &a, &b) 里的空格表示跳过任意空白（空格、回车、Tab）",
+      "输入提示语不能写进 scanf 的格式串（除非题目允许），否则程序会先等用户输入"
+    ],
+    "syntax": [
+      "int a, b;  scanf(\"%d %d\", &a, &b);",
+      "double x;  scanf(\"%lf\", &x);",
+      "char c;    scanf(\" %c\", &c);    /* 前面的空格用来跳过换行符 */",
+      "printf(\"a=%d,b=%d\\n\", a, b);"
+    ],
+    "examples": [
+      "scanf(\"%lf\", &x) 读入 10，printf(\"f(%.2f) = %.2f\\n\", x, f) 输出 f(10.00) = 3.16"
+    ],
+    "pitfalls": [
+      "%lf 只用于 scanf 读 double；printf 打印 double 仍然是 %f",
+      "scanf 漏写 & —— 程序可能不报错但直接崩溃或读到垃圾值",
+      "scanf 格式串里写了提示语（如 scanf(\"请输入：%d\", &n)）—— 程序会等你先输入「请输入：」这几个字",
+      "scanf(\"%d%c\", ...) 时 %c 会读到上次输入留下的回车或空格"
+    ],
+    "keywords": ["scanf", "%lf", "&", "取地址", "输入", "格式串"],
+    "selfTest": [
+      "为什么 printf 不用 &，而 scanf 必须用 &？",
+      "double 类型的变量，printf 用什么占位符？scanf 用什么？"
+    ],
+    "tags": ["C语言", "第2章", "2.3.4", "输入", "scanf"]
+  },
+  {
+    "chapter": "第2章",
+    "section": "2.3.5",
+    "title": "常用数学函数 sqrt / pow / fabs",
+    "concepts": [
+      "使用数学函数必须写 #include <math.h>",
+      "sqrt(x) 开平方，pow(a, b) 求 a 的 b 次方，fabs(x) 求绝对值",
+      "三个函数的参数和返回值都是 double，打印用 %f",
+      "求勾股定理的斜边：double c = sqrt(a*a + b*b);"
+    ],
+    "syntax": [
+      "#include <math.h>",
+      "sqrt(16.0)   pow(2.0, 10.0)   fabs(-3.5)",
+      "double c = sqrt(a * a + b * b);",
+      "double r = pow(a, 1.0 / 3.0);   /* 开三次方 */"
+    ],
+    "examples": [
+      "sqrt(16.0) = 4.00；pow(2, 10) = 1024.00；fabs(-3.5) = 3.50",
+      "pow(x, 0.5) 就是开平方；pow(x, 2) 就是平方"
+    ],
+    "pitfalls": [
+      "pow(x, 1/2) 里的 1/2 是整数除法等于 0，结果恒为 1，必须写 0.5 或 1.0/2",
+      "C 里 ^ 不是乘方而是按位异或：a ^ 2 能编译通过但结果完全错，求平方只能 a*a 或 pow(a, 2)",
+      "忘记 #include <math.h> 会报 implicit declaration of function 'sqrt'",
+      "float 精度只有 6~7 位有效数字，要精确用 double"
+    ],
+    "keywords": ["math.h", "sqrt", "pow", "fabs", "乘方", "开方", "绝对值"],
+    "selfTest": [
+      "pow(2, 1/2) 等于几？为什么？",
+      "C 里 a 的平方怎么写？能写 a^2 吗？",
+      "求斜边 c = sqrt(a*a + b*b) 需要包含哪个头文件？"
+    ],
+    "tags": ["C语言", "第2章", "2.3.5", "数学函数"]
+  },
+  {
+    "chapter": "第2章",
+    "section": "2.4",
+    "title": "for 语句 · 指定次数的循环",
+    "concepts": [
+      "for 骨架：for (初值; 条件; 更新) { 循环体; }",
+      "执行顺序：初值只执行一次 → 判断条件 → 执行循环体 → 执行更新 → 再判断条件……",
+      "循环次数明确时首选 for；次数不确定时用 while",
+      "循环变量 i 习惯用 int，从 0 或 1 开始，别在循环体里乱改它"
+    ],
+    "syntax": [
+      "for (int i = 0; i < n; i++) { ... }",
+      "for (int i = 1; i <= n; i++) { sum = sum + i; }",
+      "printf(\"%-6d %-6d\\n\", fahr, celsius);   /* 左对齐输出 */"
+    ],
+    "examples": [
+      "华氏-摄氏温度转换表：for (fahr = 0; fahr <= 300; fahr += 20) printf(\"%d %f\\n\", fahr, 5.0/9*(fahr-32));",
+      "求 1+2+...+100：int sum = 0; for (int i = 1; i <= 100; i++) sum += i;"
+    ],
+    "pitfalls": [
+      "for 后面多写分号 for (i = 0; i < 10; i++); 循环体变成空语句，后面的大括号块只执行一次",
+      "循环变量在循环体内又被修改，导致次数不对",
+      "循环体多条语句忘了加大括号",
+      "累加求和时变量忘了初始化 int sum = 0;"
+    ],
+    "keywords": ["for", "循环", "初值", "条件", "更新", "累加", "循环次数"],
+    "selfTest": [
+      "for (int i = 0; i < 5; i++) 循环体执行几次？i 的取值依次是什么？",
+      "累加变量为什么必须先初始化为 0？"
+    ],
+    "tags": ["C语言", "第2章", "2.4", "循环", "for"]
+  },
+  {
+    "chapter": "第2章",
+    "section": "2.5",
+    "title": "生成乘方表与阶乘表",
+    "concepts": [
+      "乘方表：输出 2^i 的值，用 pow(2.0, i) 或在循环里累乘",
+      "阶乘 n! = 1*2*3*...*n，可以用 for 循环累乘",
+      "阶乘增长极快，13! 就已经超出 int 的范围（int 最大约 21 亿）",
+      "循环变量可以和计算变量分开：i 管次数，result 管结果"
+    ],
+    "syntax": [
+      "for (int i = 0; i <= n; i++) printf(\"%d %f\\n\", i, pow(2.0, i));",
+      "long long fact = 1; for (int i = 1; i <= n; i++) fact *= i;"
+    ],
+    "examples": [
+      "2 的 0~10 次方：1 2 4 8 16 ... 1024",
+      "5! = 120；13! = 6227020800，已经超过 int 范围"
+    ],
+    "pitfalls": [
+      "累乘变量忘了初始化为 1（初始化成 0 结果永远是 0）",
+      "阶乘用 int 存会溢出，结果变成负数，要用 long long",
+      "pow 返回 double，用 %d 打印会得到垃圾值"
+    ],
+    "keywords": ["阶乘", "乘方", "pow", "溢出", "long long"],
+    "selfTest": [
+      "n! 怎么用 for 写？累乘变量为什么初始化为 1？",
+      "阶乘结果用 int 存为什么会变成负数？"
+    ],
+    "tags": ["C语言", "第2章", "2.5", "循环", "阶乘"]
+  },
+  {
+    "chapter": "第3章",
+    "section": "3.1",
+    "title": "简单的猜数游戏 · if-else 与 else-if 多分支",
+    "concepts": [
+      "if (条件) 语句 else 语句：条件为真走 if，为假走 else",
+      "else-if 链：多个条件从上往下判断，命中哪一个就执行哪一个，全不中才走 else",
+      "else-if 链的判断有顺序，范围要从范围小或条件严的往下写，否则后面的条件永远轮不到",
+      "猜数游戏逻辑：比较猜测值与目标值，输出 Too big / Too small / Right"
+    ],
+    "syntax": [
+      "if (guess > target) { ... } else if (guess < target) { ... } else { ... }",
+      "if (score >= 90) grade = 'A'; else if (score >= 80) grade = 'B'; else if (score >= 60) grade = 'C'; else grade = 'D';"
+    ],
+    "examples": [
+      "猜数游戏：目标 5，输入 8 输出 Too big，输入 2 输出 Too small，输入 5 输出 Right",
+      "成绩分等级：90 分以上 A，80~89 B，60~79 C，60 以下 D"
+    ],
+    "pitfalls": [
+      "else-if 链的顺序写反：先写 score >= 60 再写 score >= 90，那 95 分会被判成 C",
+      "else 后面又加了条件 if (...) 变成多余的嵌套，直接用 else if 更清楚",
+      "else if 中间写成 else (x > 0) —— else 后面不能跟括号条件"
+    ],
+    "keywords": ["if-else", "else-if", "多分支", "猜数游戏", "范围判断", "判断顺序"],
+    "selfTest": [
+      "else-if 链的判断顺序为什么重要？举个写反了会出错的例子。",
+      "else 后面能不能直接跟条件？"
+    ],
+    "tags": ["C语言", "第3章", "3.1", "分支", "if"]
+  },
+  {
+    "chapter": "第3章",
+    "section": "3.2.2",
+    "title": "字符型数据 · 'A' 与 \"A\" 的区别",
+    "concepts": [
+      "char 本质是一个小整数（1 字节），存的是字符的编码值：'A' 就是 65，'a' 就是 97",
+      "单引号 'A' 是字符常量（一个 char）；双引号 \"A\" 是字符串（char 数组，末尾还有 '\\0'）",
+      "'A' 与 \"A\" 大小不同：'A' 占 1 字节，\"A\" 占 2 字节",
+      "char 可以和整数互相运算：'a' - 32 得到大写 'A'",
+      "getchar() 读一个字符，putchar(c) 输出一个字符",
+      "用 %c 输出字符，用 %d 输出它对应的编码值"
+    ],
+    "syntax": [
+      "char c = 'A';",
+      "printf(\"%c %d\\n\", c, c);   /* A 65 */",
+      "char up = c - 32;             /* 小写转大写 */",
+      "int ch = getchar();  putchar(ch);",
+      "scanf(\"%c\", &c);"
+    ],
+    "examples": [
+      "printf(\"%c\", 'A' + 1) 输出 B",
+      "'a' - 'A' = 32，所有小写字母都比对应大写字母大 32",
+      "输入 a，输出 A：char c; scanf(\"%c\", &c); printf(\"%c\\n\", c - 32);"
+    ],
+    "pitfalls": [
+      "把字符常量写成双引号 \"A\" —— 那就成了字符串，printf 能打印但 scanf/比较时会出错",
+      "把字符串写成单引号 'ABC' —— 这在 C 里不合法（多字符常量）",
+      "scanf(\"%c\", &c) 会读到上次输入留下的回车符，前面加个空格：scanf(\" %c\", &c)",
+      "'0' 和 0 不一样：'0' 的编码是 48，不是 0"
+    ],
+    "keywords": ["char", "字符", "ASCII", "单引号", "双引号", "getchar", "putchar", "%c"],
+    "selfTest": [
+      "'A' 和 \"A\" 有什么区别？分别占几个字节？",
+      "'0' 和 0 相等吗？'0' 的编码是多少？",
+      "怎么把一个小写字母变成大写？"
+    ],
+    "tags": ["C语言", "第3章", "3.2", "字符", "char"]
+  },
+  {
+    "chapter": "第3章",
+    "section": "3.2.3",
+    "title": "switch 语句与 break 穿透",
+    "concepts": [
+      "switch 骨架：switch (表达式) { case 常量: 语句; break; ... default: 语句; }",
+      "执行流程：算表达式的值 → 找到匹配的 case → 从那里开始往下走，直到 break 或 } 结束（case 是入口不是隔板）",
+      "穿透 fall-through：case 后忘写 break，会把后面 case 的语句也一起执行",
+      "判断是漏了还是故意：case 后面没有语句、直接跟下一个 case 就是故意共用；有语句没 break 就是漏了",
+      "switch 括号里只能是整数类型（int/char/short/long/enum），不能是 double，也不能是字符串",
+      "case 后面必须是编译期常量，不能是变量",
+      "case 结尾用冒号（:），不是分号（;）"
+    ],
+    "syntax": [
+      "switch (op) { case '+': r = a + b; break; default: printf(\"Unknown\\n\"); }",
+      "switch (n) { case 1: case 2: case 3: printf(\"1~3\\n\"); break; }   /* 共用一段代码 */"
+    ],
+    "examples": [
+      "四则运算计算器：scanf(\"%lf %c %lf\", &a, &op, &b) 后 switch(op) 四个 case 各算一个结果",
+      "case 共享：输入 1、2、3 都输出同一句话，可以用 case 1: case 2: case 3: 连写"
+    ],
+    "pitfalls": [
+      "漏写 switch(op) 这一整行，只敲了 { } —— 报错直译就是 case label not within a switch statement",
+      "case 后面误写分号（C 里只有它不是语句，结尾不用分号）",
+      "多个 case 忘了 break，结果一路穿透，最后只留下最后一个分支的结果",
+      "switch 里放 double 或字符串 —— 浮点数不精确，字符串会退化成地址比较"
+    ],
+    "keywords": ["switch", "case", "break", "default", "穿透", "多分支"],
+    "selfTest": [
+      "case 后面忘了 break 会怎样？",
+      "switch 括号里能放 double 吗？能放字符串吗？",
+      "看到 case label not within a switch statement 报错应该先去查什么？"
+    ],
+    "tags": ["C语言", "第3章", "3.2", "switch", "分支"]
+  },
+  {
+    "chapter": "第3章",
+    "section": "3.3",
+    "title": "多分支结构 · if-else-if 处理区间",
+    "concepts": [
+      "switch 只能判断「等于某个值」，判断「落在某个范围里」必须用 if-else-if 链",
+      "if-else-if 从上往下判断，命中一个就跳出去，后面的不再看",
+      "范围判断要用 && 连接上下界：id >= 1 && id <= 30",
+      "单值判断用 if-else 也能写，和 switch 功能一样；switch 只是在分支多、需要共用分支时更清楚",
+      "else 后面只有一条语句时可以不加 {}，但两条以上必须加 {}，否则只有第一条归 else 管"
+    ],
+    "syntax": [
+      "if (id >= 1 && id <= 30) price = 3.5; else if (id >= 31 && id <= 60) price = 2.0; else { printf(\"Unknown\\n\"); return 0; }",
+      "if (a == 1) {...} else if (a == 2) {...} else {...}"
+    ],
+    "examples": [
+      "自动售货机进阶：编号 1~30 价格 3.5、31~60 是 2.0、61~90 是 3.0、91~100 是 5.5，其他输出 Unknown",
+      "用 switch 写这个要列 30 个 case，所以必须换 if-else-if"
+    ],
+    "pitfalls": [
+      "else 分支只 printf 了 Unknown 却没 return，程序继续往下执行 printf(\"%.1f\", price)，price 没赋值会打出垃圾值 0.0",
+      "else 后面两条语句没加大括号 —— 只有第一条归 else 管，return 变成无条件执行",
+      "区间端点写重或写漏：31~60 和 30~60 同时出现，边界值会被判到两个分支",
+      "想用 switch 表达范围 —— 做不到，switch 只能精确比对"
+    ],
+    "keywords": ["if-else-if", "多分支", "区间", "范围判断", "&&", "自动售货机"],
+    "selfTest": [
+      "switch 为什么写不了「1~30 之间」这种判断？",
+      "else 后面有两条语句却忘了大括号，会发生什么？",
+      "输入 101 时程序打出 Unknown 又打出 0.0，为什么？"
+    ],
+    "tags": ["C语言", "第3章", "3.3", "分支", "if"]
+  },
+  {
+    "chapter": "第3章",
+    "section": "3.3.4",
+    "title": "逻辑运算 · && || ! 与短路求值",
+    "concepts": [
+      "&& 逻辑与：两边都真才真；|| 逻辑或：有一边真就真；! 逻辑非：真变假、假变真",
+      "C 里关系运算和逻辑运算的结果都是 int 的 0 或 1，不是 boolean 类型",
+      "!x 是逻辑非（翻转真假），x != 0 是关系运算（不等于），两者不是一回事",
+      "|| 是两个竖线，不是字母 l，也不是一个竖线（一个竖线是按位或）",
+      "短路求值：a && b 中 a 为假就不再算 b；a || b 中 a 为真就不再算 b"
+    ],
+    "syntax": [
+      "if (x > 0 && x < 5) { ... }",
+      "if (ch == 'y' || ch == 'Y') { ... }",
+      "if (!found) { ... }"
+    ],
+    "examples": [
+      "!0 = 1（0 是假，取反为真），!5 = 0（5 非 0 是真，取反为假）",
+      "x = 3 时，x > 0 && x < 5 → 1 && 1 → 1（真）",
+      "闰年：year % 4 == 0 && year % 100 != 0 || year % 400 == 0"
+    ],
+    "pitfalls": [
+      "把 ! 当成「不等于」：!0 写成 !=0 就全错了",
+      "把 || 敲成一个竖线 | —— 变成按位或，结果完全不同",
+      "以为逻辑运算结果可能是别的数字 —— 结果只能是 0 或 1",
+      "&& 写成 & —— 按位与，不会短路"
+    ],
+    "keywords": ["&&", "||", "!", "逻辑运算", "短路求值", "真值表"],
+    "selfTest": [
+      "!0 和 !5 分别等于多少？",
+      "!x 和 x != 0 是一回事吗？",
+      "x = 3 时，x > 0 && x < 5 的结果是什么值（不是真假）？"
+    ],
+    "tags": ["C语言", "第3章", "3.3", "逻辑运算", "运算符"]
+  },
+  {
+    "chapter": "第4章",
+    "section": "4.1",
+    "title": "用 for 循环求 π 的近似值 · 累加与符号翻转",
+    "concepts": [
+      "格雷戈里公式：π/4 = 1 - 1/3 + 1/5 - 1/7 + ...，每项分母是 2n-1",
+      "分母自己往前跳：d = d + 2，不用每次拿 n 重算 2n-1",
+      "符号翻转用 sign 变量：初值 1，每轮 sign = -sign，自动 1、-1、1、-1",
+      "1.0 / d 写成 1.0 是为了避免整数除法先把小数砍掉",
+      "循环结束条件可以是「项数到 N」也可以是「某项小于 1e-6」，后者正是 while 的用武之地"
+    ],
+    "syntax": [
+      "for (i = 1; i <= 5; i++) { sum = sum + sign * (1.0 / d); d = d + 2; sign = -sign; }",
+      "double pi = 4 * sum;"
+    ],
+    "examples": [
+      "累加 5 项得 sum = 0.834921，π ≈ 3.339683（实测输出）",
+      "要让最后一项绝对值小于 1e-6 才停，实测需要加到第 500001 项"
+    ],
+    "pitfalls": [
+      "把 1.0 / d 写成 1 / d —— 整数除法，全变成 0",
+      "忘了 sign = -sign，结果变成 1 + 1/3 + 1/5 ...全是正数，越加越大",
+      "sign 定义成 double 再去做 sign * (1.0/d) 也行，但用 int 更直观",
+      "d = d + 2 写在了求和之前，导致第一项变成 1/3 而不是 1"
+    ],
+    "keywords": ["π", "格雷戈里", "累加", "符号翻转", "sign", "1.0/d", "近似值"],
+    "selfTest": [
+      "为什么分母要写 d = d + 2，而不是每次算 2*i-1？",
+      "sign 变量是怎么让加减号交替的？",
+      "1 / d 和 1.0 / d 有什么区别？"
+    ],
+    "tags": ["C语言", "第4章", "4.1", "循环", "累加"]
+  },
+  {
+    "chapter": "第4章",
+    "section": "4.2",
+    "title": "while 循环 · 与 for 的等价关系和死循环",
+    "concepts": [
+      "while 骨架：初值写在循环前，条件放括号里，更新写在循环体最后",
+      "for 是「计数器驱动」圈数已知；while 是「条件驱动」圈数未知",
+      "两种写法能互相改写，三件东西只是换了位置",
+      "while 是「先查后干」，条件一开始就是假的话一次都不执行",
+      "循环结束后计数器会比上限多 1：i <= 5 跑完 i 是 6"
+    ],
+    "syntax": [
+      "int i = 1; while (i <= 5) { sum = sum + i; i++; }",
+      "for (i = 1; i <= 5; i++) { sum = sum + i; }   /* 完全等价 */"
+    ],
+    "examples": [
+      "1+2+3+4+5：for 和 while 两版输出都是 sum = 15，结束后 i 和 k 都是 6（实测）",
+      "int i = 5; while (i < 5) {...} 一行都不输出（实测）"
+    ],
+    "pitfalls": [
+      "写 while 前没想清楚「谁让条件变假」 —— 循环体里不更新就是死循环，屏幕一直刷",
+      "以为 while 至少会执行一次 —— 那是 do-while",
+      "更新写在 continue 之后，被 continue 跳过，导致死循环",
+      "循环结束后 i 的值比你想的多 1，用 i 当下标时容易越界"
+    ],
+    "keywords": ["while", "死循环", "条件驱动", "先查后干", "计数器"],
+    "selfTest": [
+      "写一个 while 之前，必须先回答哪个问题？",
+      "i = 5; while (i < 5) 会执行几次？",
+      "while (i <= 5) 循环正常结束后 i 等于几？"
+    ],
+    "tags": ["C语言", "第4章", "4.2", "循环", "while"]
+  },
+  {
+    "chapter": "第4章",
+    "section": "4.2.2",
+    "title": "do-while 循环 · 先干后查",
+    "concepts": [
+      "do-while 骨架：do { 循环体; } while (条件); —— 末尾必须有分号",
+      "先执行一次循环体，再查条件；条件为真就回去再干，假才停",
+      "最少执行 1 次，这是它和 while 的唯一本质区别",
+      "典型场景：输入校验，必须至少读一次输入",
+      "用 do-while 写输入校验，scanf 只写一遍；用 while 写要写两遍"
+    ],
+    "syntax": [
+      "int n; do { printf(\"请输入正数：\"); scanf(\"%d\", &n); } while (n <= 0);"
+    ],
+    "examples": [
+      "i = 5 时 do { printf(...); i++; } while (i < 5) 会执行一次并打印（实测输出 do-while 执行了一次，i = 5）",
+      "同样条件下 while 版本一行都没输出"
+    ],
+    "pitfalls": [
+      "漏了 } while (条件); 结尾那个分号 —— 报 expected ';' before ...",
+      "以为 do-while 的条件是「为真就停」 —— 它是为真就继续做，和 while 一致",
+      "能用 while 解决的场景硬用 do-while，多绕一层",
+      "以为 do-while 比 while 高级 —— 只在确实需要至少执行一次时才用"
+    ],
+    "keywords": ["do-while", "先干后查", "至少一次", "输入校验", "分号"],
+    "selfTest": [
+      "do-while 和 while 的唯一本质区别是什么？",
+      "} while (条件); 结尾的分号能不能省？",
+      "哪种场景下必须用 do-while 才自然？"
+    ],
+    "tags": ["C语言", "第4章", "4.2", "循环", "do-while"]
+  },
+  {
+    "chapter": "第4章",
+    "section": "4.3",
+    "title": "break 与 continue · 嵌套循环",
+    "concepts": [
+      "break：跳出整个当前这层循环，循环条件不再检查，直接走循环后面的语句",
+      "continue：跳过本轮剩下的循环体，直接进入下一轮（条件照常检查、更新照常执行）",
+      "break 只管一层，嵌套循环里内层的 break 跳不出外层",
+      "continue 在 while 里有陷阱：会跳过循环体末尾手写的 i++，造成死循环；for 里 i++ 在第三段，continue 跳不到，更安全",
+      "嵌套循环规律：外层走一步，内层要跑完一整轮，总次数是两层次数的乘积",
+      "内层计数器必须在内层初始化（for 的第一个分号处），提前到外层只赋一次值，内层第二圈起就一次都不转"
+    ],
+    "syntax": [
+      "for (i = 1; i <= 10; i++) { if (sum > 100) break; sum = sum + i; }",
+      "for (i = 1; i <= 10; i++) { if (i % 2 == 0) continue; sum = sum + i; }",
+      "for (row = 1; row <= n; row++) { for (col = 1; col <= row; col++) { printf(\"*\"); } printf(\"\\n\"); }"
+    ],
+    "examples": [
+      "嵌套 3 行 4 列：外层 3 次 × 内层 4 次 = 12 次循环体（实测）",
+      "三层嵌套 for(i..3) for(j..3) if(i==j) continue; cnt++ → cnt = 6（9 减 3，实测）",
+      "内层 j 每次跳 1，若 j 只在外层前初始化一次，外层每圈结束后 j 都恒为 5（实测）"
+    ],
+    "pitfalls": [
+      "for (...) 或 if (...) 后面多写一个分号 —— 循环体变成空语句，后面的 {} 成了不受控的普通块",
+      "以为 break 能跳出两层 —— 只能跳一层",
+      "while 里用 continue 却把 i++ 写在后面 —— 死循环",
+      "内层计数器 j 的初始化提到了外层 —— 内层从第二圈起一次都不转",
+      "换行 printf(\"\\n\") 写进内层循环 —— 每打一个字符就换行，输出变竖排"
+    ],
+    "keywords": ["break", "continue", "嵌套循环", "外层内层", "跳出", "跳过"],
+    "selfTest": [
+      "break 和 continue 最本质的区别？",
+      "为什么 while 里用 continue 容易死循环，for 里就不容易？",
+      "嵌套循环里，内层计数器 j 必须在哪里初始化？",
+      "for (...) 后面多了个分号，会发生什么？"
+    ],
+    "tags": ["C语言", "第4章", "4.3", "循环", "break", "continue", "嵌套"]
+  },
+  {
+    "chapter": "第5章",
+    "section": "5.1",
+    "title": "函数的基本概念 · main 也是函数",
+    "concepts": [
+      "函数 = 打包好的一段代码，起个名字，以后按名字调用",
+      "main 本身就是函数，只是由操作系统调用；printf、scanf 也是函数，只是别人写好的",
+      "函数头拆解：返回类型 函数名(参数) { 函数体 }",
+      "int main(void) 里 int 是返回值类型（交回一个整数），(void) 表示不接收任何参数",
+      "return 0; 表示正常结束，0 交给操作系统看",
+      "调用一个函数时，控制权跳到那个函数里执行，执行完再回到调用处继续"
+    ],
+    "syntax": [
+      "int max(int a, int b) { if (a > b) return a; return b; }",
+      "int main(void) { int r = max(3, 7); printf(\"%d\\n\", r); return 0; }"
+    ],
+    "examples": [
+      "自定义 max 函数和调用：int r = max(3, 7); 得到 7",
+      "printf 就是标准库函数，它的原型写在 stdio.h 里"
+    ],
+    "pitfalls": [
+      "以为 main 特殊到不是函数 —— 它是最普通的函数，只是入口由系统认",
+      "把返回值类型写成 void 又想接结果",
+      "函数体里的语句忘了分号，或大括号不配对"
+    ],
+    "keywords": ["函数", "main", "返回类型", "参数", "函数体", "调用"],
+    "selfTest": [
+      "int main(void) 里每个部分分别是什么意思？",
+      "printf 是自己写的函数还是标准库的？它的原型从哪来？",
+      "return 0; 的 0 交给谁看？"
+    ],
+    "tags": ["C语言", "第5章", "5.1", "函数", "基础"]
+  },
+  {
+    "chapter": "第5章",
+    "section": "5.2",
+    "title": "函数原型 · C 必须先声明后使用",
+    "concepts": [
+      "C 铁律：任何函数都必须先声明（或定义）后使用，编译器从上往下读",
+      "函数原型写法：返回类型 函数名(参数类型); —— 有分号，没有 {}",
+      "函数定义：有 {} 函数体，结尾不带分号",
+      "不写原型只在调用处报 warning: implicit declaration of function，编译还能过，但那是靠编译器猜，结果碰巧对是运气",
+      "#include <stdio.h> 就是把头文件里的函数原型批量引入",
+      "只有原型没有定义：编译能过，链接时报 undefined reference to 'xxx'，collect2.exe: error: ld returned 1 exit status",
+      "原型必须写在调用它的位置之前；写在函数体内也合法，但作用域小、不合规范，标准做法是集中写在 #include 之后、main 之前"
+    ],
+    "syntax": [
+      "#include <stdio.h>\nint max(int a, int b);      /* 原型 */\n\nint main(void) { ... }\n\nint max(int a, int b)       /* 定义 */\n{ ... }",
+      "int add(int, int);          /* 参数名可省，只写类型也合法 */"
+    ],
+    "examples": [
+      "先调用后定义且不写原型：gcc 报 implicit declaration，实测输出还是 7，但那是碰巧",
+      "加上原型后警告消失，输出还是 7，这次是有保证的",
+      "只有原型没有实现：链接报 undefined reference to 'helper'"
+    ],
+    "pitfalls": [
+      "原型结尾漏分号 —— 变成定义的位置却带了分号，报 expected ...",
+      "原型和定义的参数类型不一致 —— conflicting types for 'xxx'",
+      "以为 implicit declaration 只是警告、能跑就没事 —— 参数类型一变就是个坑",
+      "以为没有定义也能跑 —— 编译阶段确实过了，链接阶段必挂"
+    ],
+    "keywords": ["函数原型", "声明", "定义", "implicit declaration", "undefined reference", "链接"],
+    "selfTest": [
+      "原型和定义的写法差在哪一个符号？",
+      "不写原型会报什么？为什么还能跑出正确结果？",
+      "只有原型没有定义，哪个阶段会报错、报什么？",
+      "原型必须写在什么位置之前？"
+    ],
+    "tags": ["C语言", "第5章", "5.2", "函数", "原型", "声明"]
+  },
+  {
+    "chapter": "第5章",
+    "section": "5.3",
+    "title": "函数的调用 · 形参与实参 · 值传递",
+    "concepts": [
+      "调用函数的结果就是一个值，可以赋给变量、当参数、参与运算、还能嵌套调用",
+      "形参是定义里的占位符，名字随便取；实参是调用时真正交出去的值",
+      "对应关系只看位置，不看名字：第 1 个实参对应第 1 个形参",
+      "值传递：实参的值被复制一份给形参，函数里改的是副本，改不动本体",
+      "函数内的局部变量（含形参）函数结束就销毁",
+      "return 交出值并且立刻结束函数，后面的语句不再执行",
+      "非 void 函数缺 return → warning: control reaches end of non-void function，能跑但返回值是垃圾值",
+      "void 函数不交回东西，只能单独当语句用，不能赋值，也不能当 printf 的参数"
+    ],
+    "syntax": [
+      "int add(int a, int b) { return a + b; }",
+      "int r = add(x, y);                      /* 赋给变量 */",
+      "printf(\"%d\\n\", add(10, 20));          /* 直接当参数 */",
+      "printf(\"%d\\n\", add(add(1,2), add(3,4)));  /* 嵌套调用 */",
+      "void print_line(int n) { ... }   print_line(10);"
+    ],
+    "examples": [
+      "add(1,2)*10 得 30，add(add(1,2), add(3,4)) 得 10（实测）",
+      "void change(int x) { x = 100; } 调用后外面还是原值（实测）",
+      "缺 return 的 sum_to：只给 warning，实测输出 6（未定义行为的垃圾值）"
+    ],
+    "pitfalls": [
+      "调用时把类型也写上：add(int 3, int 4) —— 语法错误，括号里只能放值",
+      "参数个数和定义对不上 —— too few / too many arguments to function",
+      "以为形参改了实参就会变 —— 值传递，改的是副本",
+      "void 函数写成 int x = print_line(5); —— 没有值可接",
+      "非 void 函数忘写 return —— 只警告不报错，运行结果不可信"
+    ],
+    "keywords": ["函数调用", "形参", "实参", "值传递", "return", "void", "嵌套调用"],
+    "selfTest": [
+      "形参名和实参名不一样会出错吗？为什么？",
+      "调用时括号里能不能写类型名？",
+      "void 函数能不能赋值给变量？为什么？",
+      "非 void 函数忘了 return，编译器会报错还是警告？运行结果可信吗？"
+    ],
+    "tags": ["C语言", "第5章", "5.3", "函数", "调用", "值传递"]
+  },
+  {
+    "chapter": "第5章",
+    "section": "5.4",
+    "title": "指针作参数 · 让函数改动外面的变量（跨章预习）",
+    "concepts": [
+      "C 里想通过函数改动外面的变量，必须传地址：形参写成 int *，函数体里用 *n 解引用，调用处用 &x",
+      "三件事缺一不可：① 形参 int *n  ② 函数体 *n = ...  ③ 调用处 &x",
+      "★关键：能改到外面的是 *n，不是 n。n = 999 只改复印件（地址），*n = 10 才改到本体",
+      "n 和 x 是两个不同的变量：n 装的是 x 的地址，不是 x 的值，x 和 n 只通过地址关联",
+      "函数结束时形参 n 销毁，但它改过的 x 已经在外面生效",
+      "这条规则和 Java 是对应的：Java 传基本类型改不到外面，传对象引用能改到对象内部；C 里就是显式交地址"
+    ],
+    "syntax": [
+      "void setTen(int *n) { *n = 10; }\nint main(void) { int x = 0; setTen(&x); printf(\"%d\\n\", x); }   /* 10 */",
+      "void swap(int *x, int *y) { int t = *x; *x = *y; *y = t; }\nswap(&a, &b);"
+    ],
+    "examples": [
+      "void f(int *p) { *p = *p + 1; } 调三次 f(&a)（a 初值 5）→ 输出 8（实测）",
+      "swap 正确版实测 a=3,b=7 → a=7,b=3；swap_bad 值传递版本实测改不动"
+    ],
+    "pitfalls": [
+      "★把 *x = *y 和 *y = *x 写反 —— 交换时先把 y 冲掉，结果两个都变成同一个值",
+      "调用时把 int 类型写进括号：swap(int b, a) —— 报 expected expression before 'int'",
+      "调用时漏了 &：swap(a, b) 传的是值，或把整数当地址用直接崩",
+      "函数里写 n = 999（漏了 *）—— 只改了地址变量，外面纹丝不动",
+      "以为传了地址就是传了变量本身 —— 传的是地址的副本，但那个地址指向本体"
+    ],
+    "keywords": ["指针", "地址", "解引用", "*", "&", "swap", "传地址", "跨章预习"],
+    "selfTest": [
+      "让函数改动外面变量的三件事分别是什么？",
+      "n 和 *n 哪个能改到外面的变量？为什么？",
+      "swap 三步为什么不能把 *x = *y 和 *y = *x 顺序调换？",
+      "调用时括号里能不能写 int b 这样的类型？"
+    ],
+    "tags": ["C语言", "第5章", "5.4", "函数", "指针", "跨章预习"]
+  },
+  {
+    "chapter": "第6章预告",
+    "section": "预习",
+    "title": "数组的本质 · 连续内存 + 首地址（提前铺垫）",
+    "concepts": [
+      "int a[5]; 是一排 5 个 int 盒子，地址连续排列，a[0] 在最前面",
+      "方括号里是元素个数，不是最大编号；编号从 0 开始，最大合法编号是 n-1，a[n] 已经越界",
+      "数组名 a 本身就是第一个元素的地址：a == &a[0]",
+      "下标只是偏移量：a[i] 等价于 *(a + i)，每格跳 sizeof(int) 即 4 字节",
+      "C 的局部数组不初始化就是脏数据（实测 a[0] 可能是 4225576），不是 Java 那样的默认 0",
+      "int b[5] = {1,2,3}; 只初始化前 3 个，剩下两个自动补 0",
+      "C 不做越界检查，a[5] 照样能读写，踩到的是别人的内存（可能是别的变量，可能是返回地址）",
+      "C 数组没有 .length，长度必须另外用变量记着；sizeof(a)/sizeof(a[0]) 只在声明它的作用域内有效",
+      "C 没有增强 for，遍历只能写 for (i = 0; i < n; i++)"
+    ],
+    "syntax": [
+      "int a[5];                       /* 5 个盒子，未初始化是脏数据 */",
+      "int b[5] = {1, 2, 3};           /* 剩下两个补 0 */",
+      "for (i = 0; i < n; i++) printf(\"%d \", a[i]);    /* 遍历 */",
+      "for (i = 4; i >= 0; i--) printf(\"%d \", a[i]);   /* 倒着遍历 */"
+    ],
+    "examples": [
+      "实测地址：a=62FE30，&a[0]=62FE30，&a[1]=62FE34，&a[2]=62FE38，&a[4]=62FE40，sizeof(a)=20",
+      "实测未初始化：a[0]=4225576, a[1]=0, a[2]=4225568, a[3]=0, a[4]=0",
+      "输入 1 2 3 4 5 倒序输出：for(i=4;i>=0;i--) 得 5 4 3 2 1"
+    ],
+    "pitfalls": [
+      "以为 int a[5] 会自动填 0 —— C 里是脏数据，Java 才是 0",
+      "以为越界会报错 —— C 不检查，程序要么算错要么崩，要么看起来没事",
+      "想用 a.length 问长度 —— C 没有这个写法",
+      "for 的三个分号写成逗号：for(i=4; i>=0, i--) —— 每轮减 2，少输出元素",
+      "遍历用 i <= n —— 越界一格",
+      "以为数组是对象 —— 数组名只是首地址，不含长度信息，这也是函数签名总要带 (数组, 长度) 的原因"
+    ],
+    "keywords": ["数组", "下标", "越界", "首地址", "a[i]", "*(a+i)", "sizeof", "脏数据"],
+    "selfTest": [
+      "a[0] 是第几个元素？a[5] 是第几个？越界了吗？",
+      "a 和 &a[0] 是什么关系？",
+      "int a[5]; 之后 a[0] 一定是 0 吗？",
+      "为什么每个处理数组的函数都要多传一个长度参数？",
+      "a[i] 和 *(a+i) 是一回事吗？"
+    ],
+    "tags": ["C语言", "第6章预告", "数组", "预习", "地址"]
+  }
+];
+
+/* ================= 渲染逻辑（不用改） ================= */
+const $q = document.getElementById('q');
+const $ch = document.getElementById('ch');
+const $tg = document.getElementById('tg');
+const $list = document.getElementById('list');
+const $count = document.getElementById('count');
+const openSet = new Set();
+
+function uniq(a){ return [...new Set(a)]; }
+const chapters = uniq(NOTES.map(n => n.chapter)).sort();
+const tags = uniq(NOTES.flatMap(n => n.tags || [])).sort();
+chapters.forEach(c => $ch.insertAdjacentHTML('beforeend', `<option value="${c}">${c}</option>`));
+tags.forEach(t => $tg.insertAdjacentHTML('beforeend', `<option value="${t}">${t}</option>`));
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function hi(text, q){
+  const t = esc(text);
+  if (!q) return t;
+  try {
+    const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'ig');
+    return t.replace(re, '<mark>$1</mark>');
+  } catch(e){ return t; }
+}
+function hay(n){
+  return [n.chapter,n.section,n.title,(n.concepts||[]).join(' '),(n.syntax||[]).join(' '),
+          (n.examples||[]).join(' '),(n.pitfalls||[]).join(' '),(n.keywords||[]).join(' '),
+          (n.selfTest||[]).join(' '),(n.tags||[]).join(' ')].join(' ').toLowerCase();
+}
+const listOf = (arr, q) => '<ul>' + (arr||[]).map(x => {
+  const multi = String(x).indexOf('\n') >= 0;
+  return `<li${multi ? ' data-pre=\"1\"' : ''}>${hi(x,q)}</li>`;
+}).join('') + '</ul>';
+
+function render(){
+  const q = $q.value.trim();
+  const ql = q.toLowerCase();
+  const ch = $ch.value, tg = $tg.value;
+  const items = NOTES.filter(n =>
+    (!ch || n.chapter === ch) &&
+    (!tg || (n.tags||[]).includes(tg)) &&
+    (!ql || hay(n).includes(ql))
+  );
+  $count.textContent = `共 ${NOTES.length} 条知识点 · 当前显示 ${items.length} 条`;
+
+  if (!items.length){ $list.innerHTML = '<div class="empty">没有匹配的内容，换个关键词试试</div>'; return; }
+
+  $list.innerHTML = items.map((n, i) => {
+    const id = n.chapter + '-' + n.section + '-' + i;
+    const open = openSet.has(id) ? ' open' : '';
+    return `<div class="card${open}" data-id="${id}">
+      <div class="head">
+        <span class="badge">${esc(n.chapter)} ${esc(n.section)}</span>
+        <div class="h-main">
+          <div class="h-title">${hi(n.title, q)}</div>
+          <div class="h-concepts">${hi((n.concepts||[]).slice(0,3).join(' · '), q)}</div>
+        </div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="body">
+        ${(n.concepts||[]).length ? `<div class="sec"><h3>核心知识点</h3>${listOf(n.concepts,q)}</div>` : ''}
+        ${(n.syntax||[]).length ? `<div class="sec"><h3>语法格式</h3>${listOf(n.syntax,q)}</div>` : ''}
+        ${(n.examples||[]).length ? `<div class="sec"><h3>示例说明</h3>${listOf(n.examples,q)}</div>` : ''}
+        ${(n.pitfalls||[]).length ? `<div class="sec warn"><h3>易错点</h3>${listOf(n.pitfalls,q)}</div>` : ''}
+        ${(n.selfTest||[]).length ? `<div class="sec"><h3>自测问题</h3>${listOf(n.selfTest,q)}</div>` : ''}
+        ${(n.keywords||[]).length ? `<div class="tags">${(n.keywords||[]).map(k=>`<span class="tag">${hi(k,q)}</span>`).join('')}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+$list.addEventListener('click', e => {
+  const card = e.target.closest('.card');
+  if (!card) return;
+  const id = card.dataset.id;
+  card.classList.toggle('open');
+  card.classList.contains('open') ? openSet.add(id) : openSet.delete(id);
+});
+$q.addEventListener('input', render);
+$ch.addEventListener('change', render);
+$tg.addEventListener('change', render);
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); $q.focus(); $q.select(); }
+});
+render();
+</script>
+</body>
+</html>

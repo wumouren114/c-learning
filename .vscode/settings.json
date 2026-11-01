@@ -1,0 +1,25 @@
+{
+    "files.exclude": {
+        "**/.ocr_tmp": true,
+        "**/.dsh-vision-router": true
+    },
+    "editor.quickSuggestions": {
+        "comments": "off",
+        "strings": "off",
+        "other": "off"
+    },
+    "editor.suggestOnTriggerCharacters": false,
+    "editor.acceptSuggestionOnEnter": "off",
+    "editor.tabCompletion": "off",
+    "editor.parameterHints.enabled": false,
+    "editor.snippetSuggestions": "none",
+    "editor.suggest.showSnippets": false,
+    "editor.wordBasedSuggestions": "off",
+    "editor.hover.enabled": "on",
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "cmake.configureOnOpen": false,
+    "cmake.showOptionsMovedNotification": false,
+    "cmake.options.statusBarVisibility": "hidden",
+    "cmake.automaticReconfigure": false,
+    "cmake.configureOnEdit": false
+}
